@@ -4,3 +4,6 @@ python-multipart
 librosa
 numpy
 onnxruntime
+onnx
+torch
+onnxscript
