@@ -7,3 +7,6 @@ onnxruntime
 onnx
 torch
 onnxscript
+yt-dlp
+imageio-ffmpeg
+silero-vad

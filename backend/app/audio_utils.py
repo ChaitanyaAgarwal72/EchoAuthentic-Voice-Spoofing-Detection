@@ -1,30 +1,45 @@
-import librosa
-import numpy as np
 import io
 
-def process_audio(file_bytes: bytes) -> np.ndarray:
-    """
-    Takes raw audio bytes, converts to a Mel-spectrogram, 
-    and formats it for the deep learning model.
-    """
-    audio_data, sample_rate = librosa.load(io.BytesIO(file_bytes), sr=16000)
-    
-    target_length = 64000
-    if len(audio_data) > target_length:
-        audio_data = audio_data[:target_length]
-    else:
-        padding = target_length - len(audio_data)
-        audio_data = np.pad(audio_data, (0, padding), 'constant')
-        
-    mel_spectrogram = librosa.feature.melspectrogram(
-        y=audio_data, 
-        sr=sample_rate, 
-        n_mels=128, 
-        fmax=8000
+import librosa
+import numpy as np
+
+TARGET_SAMPLE_RATE = 16000
+TARGET_AUDIO_SAMPLES = 64000
+MEL_BANDS = 128
+N_FFT = 1024
+HOP_LENGTH = 512
+FMAX = 8000
+
+
+def load_waveform(audio_bytes: bytes, sample_rate: int = TARGET_SAMPLE_RATE) -> tuple[np.ndarray, int]:
+    y, sr = librosa.load(io.BytesIO(audio_bytes), sr=sample_rate, mono=True)
+    return y.astype(np.float32), sr
+
+
+def pad_or_trim_waveform(y: np.ndarray, max_length: int = TARGET_AUDIO_SAMPLES) -> np.ndarray:
+    if len(y) > max_length:
+        return y[:max_length]
+    if len(y) < max_length:
+        return np.pad(y, (0, max_length - len(y))).astype(np.float32)
+    return y.astype(np.float32)
+
+
+def waveform_to_model_input(y: np.ndarray, sr: int = TARGET_SAMPLE_RATE) -> np.ndarray:
+    y = pad_or_trim_waveform(y)
+
+    mel_spec = librosa.feature.melspectrogram(
+        y=y,
+        sr=sr,
+        n_mels=MEL_BANDS,
+        n_fft=N_FFT,
+        hop_length=HOP_LENGTH,
+        fmax=FMAX,
+        power=2.0,
     )
-    
-    mel_spectrogram_db = librosa.power_to_db(mel_spectrogram, ref=np.max)
-    
-    formatted_input = np.expand_dims(mel_spectrogram_db, axis=(0, 1))
-    
-    return formatted_input.astype(np.float32)
+
+    processed_image = mel_spec[np.newaxis, np.newaxis, :, :]
+    return processed_image.astype(np.float32)
+
+def process_audio(audio_bytes: bytes) -> np.ndarray:
+    y, sr = load_waveform(audio_bytes)
+    return waveform_to_model_input(y, sr)
