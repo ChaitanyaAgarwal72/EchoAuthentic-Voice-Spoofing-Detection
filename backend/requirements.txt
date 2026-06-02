@@ -10,3 +10,4 @@ onnxscript
 yt-dlp
 imageio-ffmpeg
 silero-vad
+matplotlib

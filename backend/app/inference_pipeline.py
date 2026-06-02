@@ -14,7 +14,7 @@ DEFAULT_CONFIDENCE_AI_MIN = 0.90
 DEFAULT_CHUNK_SIZE_SECONDS = 4.0
 DEFAULT_CHUNK_OVERLAP_SECONDS = 2.0
 DEFAULT_CHUNK_ALERT_THRESHOLD = 0.90
-DEFAULT_CHUNK_ALERT_RATIO = 0.75
+DEFAULT_CHUNK_ALERT_RATIO = 0.66
 DEFAULT_VAD_THRESHOLD = 0.50
 TARGET_SAMPLE_RATE = 16000
 
@@ -89,26 +89,43 @@ def split_overlapping_chunks(
     chunk_size_seconds: float = DEFAULT_CHUNK_SIZE_SECONDS,
     chunk_overlap_seconds: float = DEFAULT_CHUNK_OVERLAP_SECONDS,
 ) -> list[np.ndarray]:
+    chunks, _ = split_overlapping_chunks_with_offsets(
+        waveform, sample_rate, chunk_size_seconds, chunk_overlap_seconds
+    )
+    return chunks
+
+
+def split_overlapping_chunks_with_offsets(
+    waveform: np.ndarray,
+    sample_rate: int = TARGET_SAMPLE_RATE,
+    chunk_size_seconds: float = DEFAULT_CHUNK_SIZE_SECONDS,
+    chunk_overlap_seconds: float = DEFAULT_CHUNK_OVERLAP_SECONDS,
+) -> tuple[list[np.ndarray], list[tuple[float, float]]]:
+    """Returns (chunks, [(start_sec, end_sec), ...]) relative to the input waveform."""
     chunk_size_samples = max(1, int(chunk_size_seconds * sample_rate))
     chunk_overlap_samples = max(0, int(chunk_overlap_seconds * sample_rate))
     step = max(1, chunk_size_samples - chunk_overlap_samples)
 
     if len(waveform) <= chunk_size_samples:
-        return [waveform.astype(np.float32)]
+        actual_duration = round(len(waveform) / sample_rate, 3)
+        return [waveform.astype(np.float32)], [(0.0, actual_duration)]
 
     chunks: list[np.ndarray] = []
+    offsets: list[tuple[float, float]] = []
     start = 0
     while start < len(waveform):
         end = start + chunk_size_samples
+        actual_end = min(end, len(waveform))
         chunk = waveform[start:end]
         if len(chunk) < chunk_size_samples:
             chunk = np.pad(chunk, (0, chunk_size_samples - len(chunk))).astype(np.float32)
         chunks.append(chunk.astype(np.float32))
+        offsets.append((round(start / sample_rate, 3), round(actual_end / sample_rate, 3)))
         if end >= len(waveform):
             break
         start += step
 
-    return chunks
+    return chunks, offsets
 
 
 def predict_probability_from_waveform(ort_session, waveform: np.ndarray) -> float:
@@ -165,7 +182,7 @@ def analyze_waveform_pipeline(
     vad_threshold: float = DEFAULT_VAD_THRESHOLD,
 ) -> dict:
     speech_waveform, vad_summary = apply_vad_to_waveform(waveform, sample_rate, vad_threshold)
-    chunks = split_overlapping_chunks(
+    chunks, offsets = split_overlapping_chunks_with_offsets(
         speech_waveform,
         sample_rate=sample_rate,
         chunk_size_seconds=chunk_size_seconds,
@@ -180,6 +197,17 @@ def analyze_waveform_pipeline(
         chunk_alert_ratio=chunk_alert_ratio,
     )
 
+    # Build per-chunk timeline relative to VAD-stripped speech audio
+    chunk_timeline = [
+        {
+            "start_sec": start,
+            "end_sec": end,
+            "score": round(score * 100, 2),
+            "is_ai": score >= threshold,
+        }
+        for (start, end), score in zip(offsets, chunk_scores)
+    ]
+
     average_probability = summary["average_raw_probability"]
     average_prediction = "AI-Generated" if average_probability >= threshold else "Human Voice"
 
@@ -189,6 +217,7 @@ def analyze_waveform_pipeline(
         "decision_threshold": round(threshold * 100, 2),
         "chunk_count": len(chunk_scores),
         "chunk_scores": [round(score, 6) for score in chunk_scores],
+        "chunk_timeline": chunk_timeline,
         "vad_summary": vad_summary,
         **summary,
     }

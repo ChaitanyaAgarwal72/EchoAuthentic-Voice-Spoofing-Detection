@@ -1,4 +1,6 @@
 import os
+import io
+import base64
 import importlib
 from functools import lru_cache
 import tempfile
@@ -12,6 +14,12 @@ from pydantic import BaseModel
 from app.audio_utils import load_waveform, process_audio, waveform_to_model_input
 from app.inference_pipeline import analyze_audio_bytes_pipeline, analyze_waveform_pipeline, classify_confidence_band as pipeline_classify_confidence_band
 from app.youtube_utils import download_youtube_audio as download_youtube_audio_shared
+
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import librosa
+import librosa.display
 
 app = FastAPI(title="EchoAuthentic Voice Spoofing API")
 
@@ -30,7 +38,7 @@ CONFIDENCE_AI_MIN = 0.90
 CHUNK_SIZE_SECONDS = 4.0
 CHUNK_OVERLAP_SECONDS = 1.3
 CHUNK_ALERT_THRESHOLD = 0.90
-CHUNK_ALERT_RATIO = 0.75
+CHUNK_ALERT_RATIO = 0.66
 VAD_THRESHOLD = 0.50
 ALLOWED_AUDIO_EXTENSIONS = ('.wav', '.mp3', '.flac')
 ALLOWED_YOUTUBE_HOSTNAMES = {
@@ -57,6 +65,61 @@ def classify_confidence_band(score: float, human_max: float = CONFIDENCE_HUMAN_M
     if score <= ai_min:
         return "Unverifiable / Degraded Audio"
     return "High Confidence AI"
+
+
+def generate_spectrogram_b64(waveform: np.ndarray, sample_rate: int) -> str | None:
+    """Render a full-length mel spectrogram of the waveform as a base64 PNG.
+    Caps display at 120 s for performance.
+    """
+    try:
+        max_samples = 120 * sample_rate
+        display_waveform = waveform[:max_samples] if len(waveform) > max_samples else waveform
+
+        mel_spec = librosa.feature.melspectrogram(
+            y=display_waveform,
+            sr=sample_rate,
+            n_mels=128,
+            n_fft=1024,
+            hop_length=512,
+            fmax=8000,
+            power=2.0,
+        )
+        mel_db = librosa.power_to_db(mel_spec, ref=np.max)
+
+        fig, ax = plt.subplots(figsize=(14, 3.5))
+        fig.patch.set_facecolor('#0a0d14')
+        ax.set_facecolor('#0a0d14')
+
+        img = librosa.display.specshow(
+            mel_db,
+            sr=sample_rate,
+            hop_length=512,
+            x_axis='time',
+            y_axis='mel',
+            ax=ax,
+            fmax=8000,
+            cmap='magma',
+        )
+
+        cbar = fig.colorbar(img, ax=ax, format='%+2.0f dB')
+        cbar.ax.yaxis.set_tick_params(color='#64748b')
+        plt.setp(cbar.ax.yaxis.get_ticklabels(), color='#64748b', fontsize=8)
+
+        ax.set_xlabel('Time (s)', color='#64748b', fontsize=9)
+        ax.set_ylabel('Frequency', color='#64748b', fontsize=9)
+        ax.tick_params(colors='#64748b', labelsize=8)
+        for spine in ax.spines.values():
+            spine.set_edgecolor('#1e293b')
+
+        buf = io.BytesIO()
+        fig.savefig(buf, format='png', dpi=110, bbox_inches='tight',
+                    facecolor=fig.get_facecolor(), edgecolor='none')
+        plt.close(fig)
+        buf.seek(0)
+        return base64.b64encode(buf.read()).decode('utf-8')
+    except Exception as exc:
+        print(f"[spectrogram] generation failed: {exc}")
+        return None
 
 
 def predict_probability_from_waveform(waveform: np.ndarray) -> float:
@@ -259,12 +322,15 @@ async def predict_audio(
 ):
     if not file.filename.endswith(ALLOWED_AUDIO_EXTENSIONS):
         raise HTTPException(status_code=400, detail="Invalid audio format. Please upload a .wav, .mp3, or .flac file.")
-    
+
     try:
         audio_bytes = await file.read()
-        response = analyze_audio_bytes_pipeline(
+        waveform, sample_rate = load_waveform(audio_bytes)
+
+        response = analyze_waveform_pipeline(
             ort_session,
-            audio_bytes,
+            waveform,
+            sample_rate,
             threshold=threshold,
             human_max=confidence_low,
             ai_min=confidence_high,
@@ -274,11 +340,15 @@ async def predict_audio(
             chunk_overlap_seconds=chunk_overlap_seconds,
             vad_threshold=vad_threshold,
         )
+
+        response["status"] = "success"
+        response["filename"] = file.filename
+        response["prediction"] = response["binary_prediction"]
+        response["spectrogram_b64"] = generate_spectrogram_b64(waveform, sample_rate)
         response["confidence_band_thresholds"] = {
             "human_max": round(confidence_low, 2),
             "ai_min": round(confidence_high, 2),
         }
-        response["prediction"] = response["binary_prediction"]
         response["chunk_thresholds"] = {
             "alert_score": round(chunk_alert_threshold, 2),
             "alert_ratio": round(chunk_alert_ratio, 2),
@@ -286,7 +356,7 @@ async def predict_audio(
             "chunk_overlap_seconds": round(chunk_overlap_seconds, 2),
         }
         return response
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred during processing: {str(e)}")
 
@@ -326,6 +396,7 @@ async def predict_youtube(
             "source_url": request.url,
             **summary,
             "prediction": summary["binary_prediction"],
+            "spectrogram_b64": generate_spectrogram_b64(waveform, sample_rate),
             "confidence_band_thresholds": {
                 "human_max": round(confidence_low, 2),
                 "ai_min": round(confidence_high, 2),
