@@ -219,6 +219,58 @@ function DisclaimerCallout() {
   )
 }
 
+// ─── ProgressStepper ─────────────────────────────────────────────────────────
+const PIPELINE_STAGES = [
+  { key: 'downloading', icon: '⬇️',  label: 'Download'    },
+  { key: 'loading',     icon: '🔊',  label: 'Load Audio'  },
+  { key: 'vad',         icon: '🎙️',  label: 'VAD'         },
+  { key: 'inference',   icon: '🧠',  label: 'AI Analysis' },
+  { key: 'spectrogram', icon: '📊',  label: 'Spectrogram' },
+  { key: 'done',        icon: '✅',  label: 'Done'        },
+]
+
+function ProgressStepper({ progress }) {
+  if (!progress) return null
+  const currentIdx = PIPELINE_STAGES.findIndex(s => s.key === progress.stage)
+
+  return (
+    <div className="pipeline-progress">
+      <div className="pipeline-steps">
+        {PIPELINE_STAGES.map((stage, idx) => {
+          const status = idx < currentIdx ? 'done' : idx === currentIdx ? 'active' : 'pending'
+          return (
+            <div key={stage.key} className={`pipeline-step pipeline-step--${status}`}>
+              <div className="pipeline-step-dot">
+                {status === 'done'
+                  ? <span className="pipeline-step-check">✓</span>
+                  : <span className="pipeline-step-icon">{stage.icon}</span>
+                }
+                {status === 'active' && <span className="pipeline-step-pulse" />}
+              </div>
+              <span className="pipeline-step-label">{stage.label}</span>
+              {idx < PIPELINE_STAGES.length - 1 && (
+                <div className={`pipeline-connector pipeline-connector--${status === 'done' ? 'done' : 'pending'}`} />
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      <div className="pipeline-bar-wrap">
+        <div
+          className="pipeline-bar-fill"
+          style={{ width: `${progress.pct ?? 0}%` }}
+        />
+      </div>
+
+      <p className="pipeline-label">
+        <span className="pipeline-spinner" aria-hidden="true" />
+        {progress.label}
+      </p>
+    </div>
+  )
+}
+
 // ─── SkeletonLoader ───────────────────────────────────────────────────────────
 function SkeletonLoader() {
   return (
@@ -241,13 +293,14 @@ function SkeletonLoader() {
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
 function App() {
-  const [mode, setMode]           = useState('youtube')
-  const [youtubeUrl, setYoutubeUrl] = useState('')
-  const [audioFile, setAudioFile] = useState(null)
+  const [mode, setMode]             = useState('youtube')
+  const [youtubeUrl, setYoutubeUrl]  = useState('')
+  const [audioFile, setAudioFile]    = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [result, setResult]       = useState(null)
-  const [error, setError]         = useState('')
-  const audioFileRef              = useRef(null)
+  const [result, setResult]          = useState(null)
+  const [error, setError]            = useState('')
+  const [progress, setProgress]      = useState(null)   // { stage, label, pct }
+  const audioFileRef                 = useRef(null)
 
   const apiBaseUrl = useMemo(
     () => import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
@@ -263,6 +316,7 @@ function App() {
     setMode(next)
     setResult(null)
     setError('')
+    setProgress(null)
   }
 
   const handleFileChange = (e) => {
@@ -275,32 +329,73 @@ function App() {
     e.preventDefault()
     setError('')
     setResult(null)
+    setProgress(null)
 
     try {
       setIsSubmitting(true)
-      let response
 
       if (mode === 'youtube') {
         if (!youtubeUrl.trim()) throw new Error('Please paste a YouTube link first.')
-        response = await fetch(`${apiBaseUrl}/predict/youtube/`, {
+
+        const response = await fetch(`${apiBaseUrl}/predict/youtube/stream/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url: youtubeUrl.trim() }),
         })
+
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}))
+          throw new Error(data?.detail || 'Request failed.')
+        }
+
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+        let processingError = null
+
+        outer: while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          buffer += decoder.decode(value, { stream: true })
+
+          const lines = buffer.split('\n')
+          buffer = lines.pop() ?? ''
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue
+            let evt
+            try { evt = JSON.parse(line.slice(6)) } catch { continue }
+
+            if (evt.stage === 'error') {
+              processingError = evt.message || 'Processing failed.'
+              reader.cancel()
+              break outer
+            } else if (evt.stage === 'done') {
+              setResult(evt.result)
+              setProgress(null)
+              break outer
+            } else {
+              setProgress(evt)
+            }
+          }
+        }
+
+        if (processingError) throw new Error(processingError)
+
       } else {
         if (!audioFile) throw new Error('Please choose an audio file first.')
         const fd = new FormData()
         fd.append('file', audioFile)
-        response = await fetch(`${apiBaseUrl}/predict/`, { method: 'POST', body: fd })
+        const response = await fetch(`${apiBaseUrl}/predict/`, { method: 'POST', body: fd })
+        const data = await response.json()
+        if (!response.ok) throw new Error(data?.detail || 'Prediction failed.')
+        setResult(data)
       }
-
-      const data = await response.json()
-      if (!response.ok) throw new Error(data?.detail || 'Prediction failed.')
-      setResult(data)
     } catch (err) {
       setError(err.message || 'Something went wrong.')
     } finally {
       setIsSubmitting(false)
+      setProgress(null)
     }
   }
 
@@ -385,8 +480,9 @@ function App() {
         {/* ── Error ── */}
         {error && <p className="error-box" role="alert">{error}</p>}
 
-        {/* ── Skeleton while loading ── */}
-        {isSubmitting && <SkeletonLoader />}
+        {/* ── Skeleton while loading (upload mode) / Progress stepper (YouTube) ── */}
+        {isSubmitting && mode === 'youtube' && <ProgressStepper progress={progress} />}
+        {isSubmitting && mode !== 'youtube' && <SkeletonLoader />}
 
         {/* ── Results ── */}
         {result && !isSubmitting && (
@@ -423,8 +519,16 @@ function App() {
                   </strong>
                 </div>
                 <div className="stat-card">
-                  <span>Decision Threshold</span>
-                  <strong>{result.decision_threshold}%</strong>
+                  <span>AI Chunk Ratio</span>
+                  <strong style={{
+                    color: (result.chunk_high_score_ratio ?? 0) < 0.3 ? '#34d399'
+                         : (result.chunk_high_score_ratio ?? 0) < 0.66 ? '#fbbf24'
+                         : '#fb7185',
+                  }}>
+                    {result.chunk_high_score_ratio != null
+                      ? `${Math.round(result.chunk_high_score_ratio * 100)}%`
+                      : '—'}
+                  </strong>
                 </div>
                 <div className="stat-card">
                   <span>Chunks Analysed</span>

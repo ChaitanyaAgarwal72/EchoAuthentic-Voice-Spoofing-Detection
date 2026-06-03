@@ -6,7 +6,7 @@ import importlib
 from fastapi import HTTPException
 import numpy as np
 
-from app.audio_utils import load_waveform, waveform_to_model_input
+from app.audio_utils import load_waveform, waveform_to_model_input, waveform_to_model_input_batch
 
 DEFAULT_INFERENCE_THRESHOLD = 0.98549
 DEFAULT_CONFIDENCE_HUMAN_MAX = 0.30
@@ -136,7 +136,33 @@ def predict_probability_from_waveform(ort_session, waveform: np.ndarray) -> floa
 
 
 def score_waveforms(ort_session, waveforms: list[np.ndarray]) -> list[float]:
-    return [predict_probability_from_waveform(ort_session, waveform) for waveform in waveforms]
+    """Score all chunks in a single batched ONNX forward pass.
+
+    Batching eliminates the Python<->ONNX round-trip overhead that accumulates
+    when running one chunk at a time, giving a significant speed-up for longer audio.
+
+    Note: ONNX Runtime may log a shape-mismatch warning if the model was exported
+    with a static batch size of 1. This is benign — the model still runs correctly
+    and returns the right number of scores. We fall back to per-sample inference
+    only if the batch run genuinely fails.
+    """
+    if not waveforms:
+        return []
+
+    batch_input = waveform_to_model_input_batch(waveforms)
+    input_name = ort_session.get_inputs()[0].name
+
+    try:
+        onnx_outputs = ort_session.run(None, {input_name: batch_input})
+        raw = np.array(onnx_outputs[0]).flatten()
+        # Sanity-check: we should get exactly one score per chunk
+        if len(raw) == len(waveforms):
+            return [float(v) for v in raw]
+    except Exception:
+        pass  # fall through to per-sample inference
+
+    # Fallback: run one chunk at a time (original behaviour)
+    return [predict_probability_from_waveform(ort_session, w) for w in waveforms]
 
 
 def summarize_scores(

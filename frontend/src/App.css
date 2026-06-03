@@ -338,7 +338,7 @@
   display: grid;
   grid-template-columns: 220px 1fr;
   gap: 18px;
-  align-items: start;
+  align-items: stretch;
 }
 
 /* ─── Confidence gauge ───────────────────────────────────────────────────────── */
@@ -349,6 +349,11 @@
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
 .confidence-gauge svg {
@@ -657,4 +662,173 @@
   .hero-copy h1 {
     font-size: 1.7rem;
   }
+}
+
+/* ─── Pipeline progress stepper ──────────────────────────────────────────────── */
+
+@keyframes pulse-ring {
+  0%   { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+
+@keyframes progress-shine {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+.pipeline-progress {
+  margin-top: 28px;
+  padding: 28px 26px 24px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: grid;
+  gap: 20px;
+}
+
+/* ── Step row ── */
+.pipeline-steps {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+}
+
+.pipeline-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  flex: 1;
+}
+
+/* dot */
+.pipeline-step-dot {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.3s ease, border-color 0.3s ease;
+  z-index: 1;
+}
+
+.pipeline-step--pending .pipeline-step-dot {
+  background: rgba(255, 255, 255, 0.04);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+}
+
+.pipeline-step--active .pipeline-step-dot {
+  background: linear-gradient(135deg, #7c3aed, #2563eb);
+  border: 2px solid transparent;
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.5);
+}
+
+.pipeline-step--done .pipeline-step-dot {
+  background: rgba(16, 185, 129, 0.15);
+  border: 2px solid rgba(16, 185, 129, 0.4);
+}
+
+/* icons / check */
+.pipeline-step-icon {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.pipeline-step-check {
+  font-size: 1rem;
+  color: #34d399;
+  font-weight: 700;
+}
+
+.pipeline-step--pending .pipeline-step-icon { opacity: 0.3; }
+
+/* pulse animation on active */
+.pipeline-step-pulse {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid rgba(124, 58, 237, 0.6);
+  animation: pulse-ring 1.4s ease-out infinite;
+  pointer-events: none;
+}
+
+/* label */
+.pipeline-step-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: color 0.3s ease;
+}
+
+.pipeline-step--pending  .pipeline-step-label { color: #334155; }
+.pipeline-step--active   .pipeline-step-label { color: #a78bfa; }
+.pipeline-step--done     .pipeline-step-label { color: #34d399; }
+
+/* connector line between dots */
+.pipeline-connector {
+  position: absolute;
+  top: 17px;
+  left: calc(50% + 20px);
+  right: calc(-50% + 20px);
+  height: 2px;
+  border-radius: 2px;
+  transition: background 0.4s ease;
+}
+
+.pipeline-connector--done    { background: rgba(16, 185, 129, 0.35); }
+.pipeline-connector--pending { background: rgba(255, 255, 255, 0.07); }
+
+/* ── Progress bar ── */
+.pipeline-bar-wrap {
+  height: 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.pipeline-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    #7c3aed 0%,
+    #2563eb 50%,
+    #7c3aed 100%
+  );
+  background-size: 200% auto;
+  animation: progress-shine 2s linear infinite;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Stage label ── */
+.pipeline-label {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.88rem;
+  color: #94a3b8;
+}
+
+.pipeline-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(124, 58, 237, 0.3);
+  border-top-color: #a78bfa;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+  .pipeline-step-label { display: none; }
+  .pipeline-step-dot { width: 28px; height: 28px; }
+  .pipeline-connector { top: 13px; }
 }
