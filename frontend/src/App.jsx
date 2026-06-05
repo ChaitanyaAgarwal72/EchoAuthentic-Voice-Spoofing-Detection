@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import './App.css'
+import LiveMicDetection from './LiveMicDetection'
 
 // ─── ConfidenceGauge ──────────────────────────────────────────────────────────
 function ConfidenceGauge({ score, confidenceBand }) {
@@ -679,10 +680,13 @@ function App() {
           <div className="mode-switch" role="tablist" aria-label="Input source">
             <button id="tab-youtube" type="button" role="tab" aria-selected={mode === 'youtube'}
               className={mode === 'youtube' ? 'mode-button active' : 'mode-button'}
-              onClick={() => handleModeChange('youtube')}>YouTube Link</button>
+              onClick={() => handleModeChange('youtube')}>YouTube</button>
             <button id="tab-upload" type="button" role="tab" aria-selected={mode === 'upload'}
               className={mode === 'upload' ? 'mode-button active' : 'mode-button'}
-              onClick={() => handleModeChange('upload')}>Audio File Upload</button>
+              onClick={() => handleModeChange('upload')}>Upload</button>
+            <button id="tab-live" type="button" role="tab" aria-selected={mode === 'live'}
+              className={mode === 'live' ? 'mode-button active' : 'mode-button'}
+              onClick={() => handleModeChange('live')}>🎙 Live Mic</button>
           </div>
 
           {mode === 'youtube' ? (
@@ -691,21 +695,26 @@ function App() {
               <input id="youtube-url" type="url" placeholder="https://www.youtube.com/watch?v=..."
                 value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} />
             </label>
-          ) : (
+          ) : mode === 'upload' ? (
             <label className="field" htmlFor="audio-file">
               <span>Audio File <small className="format-hint">.wav · .mp3 · .flac</small></span>
               <input id="audio-file" type="file" accept=".wav,.mp3,.flac,audio/*" onChange={handleFileChange} />
               <small className="file-name">{audioFile ? `Selected: ${audioFile.name}` : 'No file selected.'}</small>
             </label>
-          )}
+          ) : null}
 
-          <button id="predict-btn" type="submit" className="predict-button" disabled={isSubmitting}>
-            {isSubmitting ? <span className="btn-inner"><span className="spinner" aria-hidden="true" />Analysing…</span> : 'Run Detection'}
-          </button>
+          {mode !== 'live' && (
+            <button id="predict-btn" type="submit" className="predict-button" disabled={isSubmitting}>
+              {isSubmitting ? <span className="btn-inner"><span className="spinner" aria-hidden="true" />Analysing…</span> : 'Run Detection'}
+            </button>
+          )}
         </form>
 
+        {/* ── Live Mic mode ── */}
+        {mode === 'live' && <LiveMicDetection />}
+
         {/* ── Error ── */}
-        {error && <p className="error-box" role="alert">{error}</p>}
+        {mode !== 'live' && error && <p className="error-box" role="alert">{error}</p>}
 
         {/* ── Loading states ── */}
         {isSubmitting && mode === 'youtube' && <ProgressStepper progress={progress} />}
