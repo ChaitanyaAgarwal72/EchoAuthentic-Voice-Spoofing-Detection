@@ -12,7 +12,9 @@ jobs:
         with:
           fetch-depth: 0
           lfs: true
+      - name: Install Hugging Face Hub CLI
+        run: pip install -U "huggingface_hub[cli]"
       - name: Push to hub
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: git push --force https://chaitanyaagarwal72:$HF_TOKEN@huggingface.co/spaces/genAI71/echo-authentic-api main
+        run: huggingface-cli upload genAI71/echo-authentic-api . . --repo-type space
