@@ -15,9 +15,7 @@ ALLOWED_YOUTUBE_HOSTNAMES = {
     "youtu.be",
 }
 
-# Hard cap: refuse to download anything longer than this.
-MAX_YOUTUBE_DURATION_SECONDS = 300  # 5 minutes
-
+MAX_YOUTUBE_DURATION_SECONDS = 300 
 
 def _match_filter(info_dict: dict, *, incomplete: bool) -> str | None:
     """yt-dlp match_filter hook — called before any download begins.
@@ -63,7 +61,7 @@ def download_youtube_audio(url: str) -> tuple[bytes, str]:
         ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
 
         ydl_options = {
-            "format": "ba/b",
+            "format": "bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best",
             "outtmpl": output_template,
             "noplaylist": True,
             "quiet": True,
@@ -71,7 +69,6 @@ def download_youtube_audio(url: str) -> tuple[bytes, str]:
             "ffmpeg_location": ffmpeg_path,
             "legacyserverconnect": True,
             "source_address": "0.0.0.0",
-            # Abort before downloading if the video exceeds the duration cap.
             "match_filter": _match_filter,
             "postprocessors": [
                 {
