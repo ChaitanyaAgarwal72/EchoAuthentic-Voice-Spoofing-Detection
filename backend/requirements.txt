@@ -5,8 +5,7 @@ librosa
 numpy
 onnxruntime
 torch
-yt-dlp
+yt-dlp @ git+https://github.com/yt-dlp/yt-dlp.git
 imageio-ffmpeg
 silero-vad
 matplotlib
-# Force rebuild to get latest yt-dlp
