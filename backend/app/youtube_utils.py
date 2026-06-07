@@ -63,7 +63,7 @@ def download_youtube_audio(url: str) -> tuple[bytes, str]:
         ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
 
         ydl_options = {
-            "format": "bestaudio/best",
+            "format": "bestaudio/bestvideo+bestaudio/best",
             "outtmpl": output_template,
             "noplaylist": True,
             "quiet": True,
@@ -81,12 +81,6 @@ def download_youtube_audio(url: str) -> tuple[bytes, str]:
                 }
             ],
         }
-
-        try:
-            from yt_dlp.networking.impersonate import ImpersonateTarget
-            ydl_options["impersonate"] = ImpersonateTarget(client="chrome")
-        except ImportError:
-            pass
 
         # Securely handle cookies if provided via Hugging Face Secrets
         cookies_env = os.environ.get("YOUTUBE_COOKIES")
