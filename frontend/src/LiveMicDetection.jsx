@@ -425,11 +425,11 @@ export default function LiveMicDetection() {
 
       {/* ── Header ── */}
       <div className="live-mic-header">
-        <span className="live-mic-icon-badge" aria-hidden="true">🎙</span>
+        <span className="live-mic-icon-badge" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg></span>
         <div className="live-mic-title-wrap">
-          <h3 className="live-mic-title">Live Mic Detection</h3>
+          <h3 className="live-mic-title">Live Mic – Privacy First</h3>
           <p className="live-mic-subtitle">
-            Web Audio VAD · EchoAuthentic ONNX · 100% on-device · no audio leaves your device
+            Voice activity detection (VAD) runs inside your browser. Your audio never leaves this device – not even to our server.
           </p>
         </div>
         {active && (
@@ -440,37 +440,37 @@ export default function LiveMicDetection() {
       </div>
 
       {/* ── Error ── */}
-      {error && (
-        <div className="live-error-box" role="alert">
-          <span aria-hidden="true">⚠️</span><span>{error}</span>
-        </div>
-      )}
+      <div className={`live-error-box ${error ? 'show' : ''}`} role="alert" aria-hidden={!error}>
+        <span aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span><span>{error}</span>
+      </div>
 
       {/* ── Mic button ── */}
       <div className="mic-btn-wrap">
-        {active && <span className="mic-ring mic-ring--1" aria-hidden="true" />}
-        {active && <span className="mic-ring mic-ring--2" aria-hidden="true" />}
-        <button
-          id="live-mic-start-stop"
-          className={`mic-btn${active ? ' mic-btn--active' : ''}`}
-          onClick={active ? handleStop : handleStart}
-          disabled={status === 'initialising'}
-          aria-label={active ? 'Stop live detection' : 'Start live detection'}
-        >
-          {status === 'initialising' ? (
-            <span className="mic-spinner" aria-hidden="true" />
-          ) : active ? (
-            <svg viewBox="0 0 24 24" fill="currentColor" width="30" height="30" aria-hidden="true">
-              <rect x="5" y="5" width="14" height="14" rx="2" />
-            </svg>
-          ) : (
-            <svg viewBox="0 0 24 24" fill="currentColor" width="30" height="30" aria-hidden="true">
-              <path d="M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z" />
-              <path d="M19 12a7 7 0 0 1-14 0H3a9 9 0 0 0 18 0h-2z" />
-              <line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          )}
-        </button>
+        <div className="mic-btn-center">
+          {active && <span className="mic-ring mic-ring--1" aria-hidden="true" />}
+          {active && <span className="mic-ring mic-ring--2" aria-hidden="true" />}
+          <button
+            id="live-mic-start-stop"
+            className={`mic-btn${active ? ' mic-btn--active' : ''}`}
+            onClick={active ? handleStop : handleStart}
+            disabled={status === 'initialising'}
+            aria-label={active ? 'Stop live detection' : 'Start live detection'}
+          >
+            {status === 'initialising' ? (
+              <span className="mic-spinner" aria-hidden="true" />
+            ) : active ? (
+              <svg viewBox="0 0 24 24" fill="currentColor" width="30" height="30" aria-hidden="true">
+                <rect x="5" y="5" width="14" height="14" rx="2" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" fill="currentColor" width="30" height="30" aria-hidden="true">
+                <path d="M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z" />
+                <path d="M19 12a7 7 0 0 1-14 0H3a9 9 0 0 0 18 0h-2z" />
+                <line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            )}
+          </button>
+        </div>
         <p className="mic-btn-label">
           {status === 'initialising' ? 'Loading model…' : active ? 'Click to stop' : 'Start Detection'}
         </p>
@@ -491,10 +491,10 @@ export default function LiveMicDetection() {
             style={{ color: status === 'speaking' ? '#fbbf24' : '#475569' }}
           >
             {status === 'speaking'
-              ? '🎤 Voice detected — will analyse when you pause'
+              ? 'Voice detected — will analyse when you pause'
               : status === 'analysing'
-                ? '🧠 Analysing…'
-                : '👂 Waiting for speech…'}
+                ? 'Analysing…'
+                : 'Waiting for speech…'}
           </span>
         </div>
       )}
@@ -568,19 +568,19 @@ export default function LiveMicDetection() {
       {score === null && !error && (
         <div className="live-hint">
           {!active ? (
-            <p>Click <strong>Start Detection</strong> to begin. Speak naturally — analysis triggers automatically after each speech segment.</p>
+            <p>Click <strong>Start Detection</strong> to begin. Speak naturally for 3–5 seconds. We'll analyze each speech segment and update the meter in real time.</p>
           ) : status === 'listening' ? (
-            <p>🎤 Say something for a few seconds, then pause. The model will analyse each segment automatically.</p>
+            <p>Say something for a few seconds, then pause. The model will analyse each segment automatically.</p>
           ) : null}
         </div>
       )}
 
       {/* ── Privacy strip ── */}
       <div className="live-privacy-strip">
-        <span aria-hidden="true">🔒</span>
-        <span>Audio processed entirely on-device via WebAssembly</span>
+        <span aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+        <span>100% local — Audio processed entirely on-device</span>
         <span className="live-privacy-sep" aria-hidden="true">·</span>
-        <span aria-hidden="true">⚠️</span>
+        <span aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>
         <span>Trained on ASVspoof 2019 — may not catch the latest AI voices</span>
       </div>
 

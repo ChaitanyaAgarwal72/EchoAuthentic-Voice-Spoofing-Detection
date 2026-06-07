@@ -56,7 +56,7 @@ function AudioPlayer({ file }) {
   return (
     <div className="panel-block audio-player-wrap">
       <div className="panel-label">
-        <span className="panel-icon">🎧</span>
+        <span className="panel-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1v-6h3v4zM3 19a2 2 0 0 0 2 2h1v-6H3v4z"/></svg></span>
         <span>Audio Preview</span>
         <span className="panel-note">uploaded file</span>
       </div>
@@ -71,7 +71,7 @@ function SpectrogramPanel({ spectrogramB64 }) {
   return (
     <div className="panel-block spectrogram-panel">
       <div className="panel-label">
-        <span className="panel-icon">📊</span>
+        <span className="panel-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></span>
         <span>Mel Spectrogram</span>
         <span className="panel-note">full audio · capped at 120 s</span>
       </div>
@@ -87,7 +87,7 @@ function DurationWarning({ message }) {
   if (!message) return null
   return (
     <div className="duration-warning" role="alert">
-      <span className="duration-warning-icon" aria-hidden="true">⏱</span>
+      <span className="duration-warning-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
       <div className="duration-warning-body">
         <strong>Short Audio Warning</strong>
         <p>{message}</p>
@@ -182,7 +182,7 @@ function FrequencyHeatmap({ profiles, chunkTimeline, selectedChunkIdx, onChunkCl
   return (
     <div className="panel-block heatmap-panel">
       <div className="panel-label">
-        <span className="panel-icon">🌡️</span>
+        <span className="panel-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg></span>
         <span>Frequency Band Heatmap</span>
         <span className="panel-note">spectral energy per chunk · red overlay = elevated AI score · click to play</span>
       </div>
@@ -255,7 +255,7 @@ function ConfidenceWaterfall({ chunkTimeline, selectedChunkIdx, onChunkClick }) 
   return (
     <div className="panel-block waterfall-panel">
       <div className="panel-label">
-        <span className="panel-icon">📈</span>
+        <span className="panel-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>
         <span>Confidence Waterfall</span>
         <span className="panel-note">AI probability per segment · {N} chunks · click to play</span>
       </div>
@@ -420,7 +420,7 @@ function ChunkPlayer({ chunk, audioFile, apiBaseUrl, mode, onClose }) {
   return (
     <div className="chunk-player">
       <div className="cp-header">
-        <span className="cp-icon">🎵</span>
+        <span className="cp-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></span>
         <span className="cp-title">Segment Player</span>
         <div className="cp-badges">
           <span className="cp-badge cp-badge--time">{chunk.start_sec.toFixed(2)}s – {chunk.end_sec.toFixed(2)}s</span>
@@ -458,7 +458,7 @@ function SegmentTimeline({ timeline, onChunkClick, selectedChunkIdx }) {
   return (
     <div className="panel-block segment-timeline">
       <div className="panel-label">
-        <span className="panel-icon">⏱</span>
+        <span className="panel-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
         <span>Segment Strip</span>
         <span className="panel-note">VAD-stripped speech · {timeline.length} chunks · click any segment to play</span>
       </div>
@@ -507,14 +507,11 @@ function SegmentTimeline({ timeline, onChunkClick, selectedChunkIdx }) {
 function DisclaimerCallout() {
   return (
     <div className="disclaimer-callout">
-      <span className="disclaimer-icon" aria-hidden="true">⚠️</span>
+      <span className="disclaimer-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
       <div className="disclaimer-body">
         <strong>Model Reliability Notice</strong>
         <p>
-          This model was trained on the <strong>ASVspoof 2019</strong> dataset, which predates modern AI voice
-          generators (ElevenLabs, Suno, Udio, etc.). Scores in the <strong>30–90%</strong> range are
-          classified as <em>"Unverifiable / Degraded Audio"</em> and should not be treated as conclusive.
-          Always corroborate results with additional signals.
+          This model was trained on the ASVspoof 2019 dataset and may not detect the newest AI voice generators (e.g., ElevenLabs, Suno). Please use as one of many signals, not as conclusive proof.
         </p>
       </div>
     </div>
@@ -523,12 +520,12 @@ function DisclaimerCallout() {
 
 // ─── ProgressStepper ─────────────────────────────────────────────────────────
 const PIPELINE_STAGES = [
-  { key: 'downloading', icon: '⬇️', label: 'Download' },
-  { key: 'loading', icon: '🔊', label: 'Load Audio' },
-  { key: 'vad', icon: '🎙️', label: 'VAD' },
-  { key: 'inference', icon: '🧠', label: 'AI Analysis' },
-  { key: 'spectrogram', icon: '📊', label: 'Spectrogram' },
-  { key: 'done', icon: '✅', label: 'Done' },
+  { key: 'downloading', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>, label: 'Download' },
+  { key: 'loading', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>, label: 'Load Audio' },
+  { key: 'vad', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>, label: 'VAD' },
+  { key: 'inference', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>, label: 'AI Analysis' },
+  { key: 'spectrogram', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>, label: 'Spectrogram' },
+  { key: 'done', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>, label: 'Done' },
 ]
 
 function ProgressStepper({ progress }) {
@@ -675,13 +672,22 @@ function App() {
       <section className="dashboard-card">
 
         {/* ── Masthead ── */}
-        <div className="hero-copy">
-          <span className="eyebrow">EchoAuthentic</span>
-          <h1>Audio Deepfake Detection</h1>
-          <p>
-            Analyse a YouTube link or upload a file to detect AI-generated speech.
-            Results include a confidence score, frequency heatmap, waterfall chart, and per-segment playback.
-          </p>
+        <div className="hero-section">
+          <div className="hero-copy">
+            <span className="eyebrow">EchoAuthentic</span>
+            <h1>Audio Deepfake Detection</h1>
+            <p>
+              Upload any audio or YouTube link – or test live with your microphone. Get an instant AI probability score, an interactive spectrogram heatmap, and a per‑segment playback timeline.
+            </p>
+          </div>
+          
+          <div className="hero-visual">
+            <div className="hv-waveform">
+              {[20, 40, 75, 45, 30, 65, 90, 70, 40, 35, 60, 85, 100, 75, 45, 30, 55, 80, 40, 25].map((h, i) => (
+                <div key={i} className="hv-bar" style={{ height: `${h}%`, animationDelay: `${i * 0.06}s` }} />
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* ── Input form ── */}
@@ -695,7 +701,7 @@ function App() {
               onClick={() => handleModeChange('upload')}>Upload</button>
             <button id="tab-live" type="button" role="tab" aria-selected={mode === 'live'}
               className={mode === 'live' ? 'mode-button active' : 'mode-button'}
-              onClick={() => handleModeChange('live')}>🎙 Live Mic</button>
+              onClick={() => handleModeChange('live')}>Live Mic</button>
           </div>
 
           {mode === 'youtube' ? (
@@ -706,9 +712,8 @@ function App() {
             </label>
           ) : mode === 'upload' ? (
             <label className="field" htmlFor="audio-file">
-              <span>Audio File <small className="format-hint">.wav · .mp3 · .flac</small></span>
+              <span>Supported formats: .wav, .mp3, .flac (max 50MB)</span>
               <input id="audio-file" type="file" accept=".wav,.mp3,.flac,audio/*" onChange={handleFileChange} />
-              <small className="file-name">{audioFile ? `Selected: ${audioFile.name}` : 'No file selected.'}</small>
             </label>
           ) : null}
 
@@ -723,7 +728,9 @@ function App() {
         {mode === 'live' && <LiveMicDetection />}
 
         {/* ── Error ── */}
-        {mode !== 'live' && error && <p className="error-box" role="alert">{error}</p>}
+        <div className={`error-box ${mode !== 'live' && error ? 'show' : ''}`} role="alert" aria-hidden={!(mode !== 'live' && error)}>
+          {error}
+        </div>
 
         {/* ── Loading states ── */}
         {isSubmitting && mode === 'youtube' && <ProgressStepper progress={progress} />}
@@ -735,13 +742,15 @@ function App() {
 
             {/* Prediction banner */}
             <div className={`prediction-banner prediction-banner--${bannerVariant}`}>
-              <span className="pred-icon" aria-hidden="true">{isAi ? '🤖' : isHuman ? '✅' : '❓'}</span>
+              <span className="pred-icon" aria-hidden="true">
+                {isAi ? <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="10" rx="2" /><circle cx="12" cy="5" r="2" /><path d="M12 7v4" /><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="16" y1="16" x2="16.01" y2="16"/></svg> : isHuman ? <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 6L9 17l-5-5"/></svg> : <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>}
+              </span>
               <div className="pred-text">
                 <div className="pred-label">Prediction</div>
                 <div className="pred-value">{predictionLabel}</div>
                 {result.filename && (
                   <div className="pred-file" title={result.filename}>
-                    <span className="pred-file-icon">📁</span>
+                    <span className="pred-file-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
                     <span className="pred-file-name">{result.filename}</span>
                   </div>
                 )}

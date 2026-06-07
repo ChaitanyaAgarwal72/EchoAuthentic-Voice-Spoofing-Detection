@@ -27,18 +27,30 @@
 
 /* ─── Hero copy ─────────────────────────────────────────────────────────────── */
 
+.hero-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+  margin-bottom: 36px;
+  flex-wrap: wrap;
+}
+
 .hero-copy {
-  margin-bottom: 32px;
+  margin-bottom: 0;
+  flex: 1;
+  min-width: 320px;
 }
 
 .eyebrow {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 11px;
+  font-size: 14px;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.22em;
-  color: #a78bfa;
+  color: #c4b5fd;
   margin-bottom: 14px;
 }
 
@@ -55,10 +67,42 @@
 }
 
 .hero-copy p {
-  max-width: 65ch;
+  max-width: 60ch;
   color: #94a3b8;
   font-size: 0.97rem;
   line-height: 1.65;
+}
+
+/* ─── Hero Visual ───────────────────────────────────────────────────────────── */
+
+.hero-visual {
+  position: relative;
+  width: 340px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  margin-right: 30px;
+}
+
+.hv-waveform {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 85px;
+  width: 100%;
+}
+
+.hv-bar {
+  flex: 1;
+  border-radius: 2px;
+  background: linear-gradient(180deg, rgba(167, 139, 250, 0.8), rgba(59, 130, 246, 0.8));
+  animation: hv-bar-dance 1.4s ease-in-out infinite alternate;
+}
+
+@keyframes hv-bar-dance {
+  0% { transform: scaleY(0.2); opacity: 0.4; }
+  100% { transform: scaleY(1); opacity: 1; }
 }
 
 /* ─── Form ───────────────────────────────────────────────────────────────────── */
@@ -207,13 +251,26 @@
 /* ─── Error box ──────────────────────────────────────────────────────────────── */
 
 .error-box {
+  max-height: 0;
+  opacity: 0;
   margin: 0;
-  padding: 14px 18px;
+  padding: 0 18px;
+  overflow: hidden;
   border-radius: 14px;
   background: rgba(239, 68, 68, 0.12);
   color: #fca5a5;
-  border: 1px solid rgba(239, 68, 68, 0.28);
+  border: 1px solid transparent;
   font-size: 0.9rem;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+}
+
+.error-box.show {
+  max-height: 100px;
+  opacity: 1;
+  margin-top: 16px;
+  padding-top: 14px;
+  padding-bottom: 14px;
+  border-color: rgba(239, 68, 68, 0.28);
 }
 
 /* ─── Skeleton loader ────────────────────────────────────────────────────────── */
@@ -705,7 +762,11 @@
 
 @media (max-width: 480px) {
   .hero-copy h1 {
-    font-size: 1.7rem;
+    font-size: 2.4rem;
+  }
+
+  .hero-visual {
+    display: none;
   }
 }
 
@@ -1194,13 +1255,27 @@
   display: flex;
   gap: 10px;
   align-items: flex-start;
-  padding: 14px 18px;
   border-radius: 14px;
   background: rgba(239, 68, 68, 0.10);
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  border: 1px solid transparent;
   color: #fca5a5;
   font-size: 0.87rem;
   line-height: 1.55;
+  max-height: 0;
+  opacity: 0;
+  margin: 0;
+  padding: 0 18px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+}
+
+.live-error-box.show {
+  max-height: 100px;
+  opacity: 1;
+  margin-top: 16px;
+  padding-top: 14px;
+  padding-bottom: 14px;
+  border-color: rgba(239, 68, 68, 0.25);
 }
 
 /* ── Mic button ── */
@@ -1216,6 +1291,13 @@
   gap: 14px;
   padding: 30px 0 18px;
   position: relative;
+}
+
+.mic-btn-center {
+  position: relative;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .mic-ring {
@@ -1392,7 +1474,7 @@
   display: grid;
   grid-template-columns: 220px 1fr;
   gap: 16px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .live-gauge-wrap {
@@ -1400,6 +1482,10 @@
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .live-stats-wrap {
@@ -1515,7 +1601,7 @@
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.05);
   font-size: 0.73rem;
-  color: #475569;
+  color: #94a3b8;
   line-height: 1.5;
 }
 
