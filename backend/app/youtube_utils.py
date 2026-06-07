@@ -71,7 +71,6 @@ def download_youtube_audio(url: str) -> tuple[bytes, str]:
             "ffmpeg_location": ffmpeg_path,
             "legacyserverconnect": True,
             "source_address": "0.0.0.0",
-            "impersonate": "chrome",
             "extractor_args": {"youtube": {"player_client": ["android"]}},
             # Abort before downloading if the video exceeds the duration cap.
             "match_filter": _match_filter,
@@ -83,6 +82,12 @@ def download_youtube_audio(url: str) -> tuple[bytes, str]:
                 }
             ],
         }
+
+        try:
+            from yt_dlp.networking.impersonate import ImpersonateTarget
+            ydl_options["impersonate"] = ImpersonateTarget(client="chrome")
+        except ImportError:
+            pass
 
         # Securely handle cookies if provided via Hugging Face Secrets
         cookies_env = os.environ.get("YOUTUBE_COOKIES")
