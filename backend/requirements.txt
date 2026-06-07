@@ -9,3 +9,4 @@ yt-dlp
 imageio-ffmpeg
 silero-vad
 matplotlib
+# Force rebuild to get latest yt-dlp
