@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
     libsndfile1 \
     git \
     nodejs \
+    && ln -s /usr/bin/nodejs /usr/bin/node || true \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --chown=user backend/requirements.txt $HOME/app/
